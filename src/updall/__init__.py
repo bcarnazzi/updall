@@ -1,6 +1,5 @@
 import platform
 
-from click.decorators import option
 import sh
 import click
 from rich import print as richprint
