@@ -32,6 +32,8 @@ def main(nvim: bool) -> None:
                 status.update("Updating APT system packages...")
                 run.sudo("apt", "update")
                 run.sudo("apt", "full-upgrade", "-y")
+                status.update("Updating flatpaks...")
+                run.flatpak("update", "-y")
             case "Darwin":
                 status.update("Updating Homebrew packages...")
                 run.brew("update")
