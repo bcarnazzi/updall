@@ -1,23 +1,42 @@
 import platform
 
+from click.decorators import option
 import sh
+import click
 from rich import print as richprint
 from rich.console import Console
 
 
-def main() -> None:
+def create_live_runner():
+    class Runner:
+        def __getattr__(self, name):
+            command = getattr(sh, name)
+
+            def runner(*args, **kwargs):
+                for line in command(*args, _iter=True, **kwargs):
+                    print(line, end="")
+
+            return runner
+
+    return Runner()
+
+
+@click.command
+@click.option("--nvim", is_flag=True, help="Include neovim plugins updates")
+def main(nvim: bool) -> None:
+    run = create_live_runner()
     console = Console()
 
     with console.status("") as status:
         match platform.system():
             case "Linux":
                 status.update("Updating APT system packages...")
-                print(sh.sudo.apt("update"))
-                print(sh.sudo.apt("full-upgrade", "-y"))
+                run.sudo("apt", "update")
+                run.sudo("apt", "full-upgrade", "-y")
             case "Darwin":
                 status.update("Updating Homebrew packages...")
-                print(sh.brew("update"))
-                print(sh.brew("upgrade"))
+                run.brew("update")
+                run.brew("upgrade")
             case _:
                 console.log(
                     f":red_circle: Unsupported operating system: {platform.system()}"
@@ -25,17 +44,18 @@ def main() -> None:
                 return
 
         status.update("Updating mise-en-place packages...")
-        print(sh.mise("self-update", "-y"))
-        print(sh.mise("up", "-y"))
+        run.mise("self-update", "-y")
+        run.mise("up", "-y")
 
         status.update("Updating uv packages...")
-        print(sh.uv("tool", "upgrade", "--all"))
+        run.uv("tool", "upgrade", "--all")
 
-        status.update("Updating neovim plugins...")
-        sh.nvim(
-            "--headless",
-            "-c",
-            "+lua MiniDeps.later(function() MiniDeps.update(nil, { force = true }); vim.cmd('TSUpdateSync'); vim.cmd('qa') end); vim.wait(30000)",
-        )
+        if nvim:
+            status.update("Updating neovim plugins...")
+            run.nvim(
+                "--headless",
+                "-c",
+                "+lua MiniDeps.later(function() MiniDeps.update(nil, { force = true }); vim.cmd('TSUpdateSync'); vim.cmd('qa') end); vim.wait(30000)",
+            )
 
     richprint(":white_check_mark: System is up-to-date")

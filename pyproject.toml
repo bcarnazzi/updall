@@ -1,11 +1,15 @@
 [project]
 name = "updall"
-version = "0.2.0"
+version = "0.3.0"
 description = "A simple update manager"
 readme = "README.md"
 authors = [{ name = "Bruno Carnazzi", email = "bcarnazzi@gmail.com" }]
 requires-python = ">=3.13"
-dependencies = ["rich>=14.1.0", "sh>=2.2.2"]
+dependencies = [
+    "click>=8.2.1",
+    "rich>=14.1.0",
+    "sh>=2.2.2",
+]
 
 [project.scripts]
 updall = "updall:main"
