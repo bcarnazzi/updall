@@ -1,14 +1,28 @@
+import platform
+
 import sh
-from rich.console import Console
 from rich import print as richprint
+from rich.console import Console
 
 
 def main() -> None:
     console = Console()
 
-    with console.status("Updating APT system packages...") as status:
-        print(sh.sudo.apt("update"))
-        print(sh.sudo.apt("full-upgrade", "-y"))
+    with console.status("") as status:
+        match platform.system():
+            case "Linux":
+                status.update("Updating APT system packages...")
+                print(sh.sudo.apt("update"))
+                print(sh.sudo.apt("full-upgrade", "-y"))
+            case "Darwin":
+                status.update("Updating Homebrew packages...")
+                print(sh.brew("update"))
+                print(sh.brew("upgrade"))
+            case _:
+                console.log(
+                    f":red_circle: Unsupported operating system: {platform.system()}"
+                )
+                return
 
         status.update("Updating mise-en-place packages...")
         print(sh.mise("self-update", "-y"))
